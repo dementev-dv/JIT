@@ -1,0 +1,17 @@
+#ifndef TYPES_HPP_
+#define TYPES_HPP_
+
+enum class DataType {
+  VOID,
+  BOOL,
+  I8,
+  U8,
+  I16,
+  U16,
+  I32,
+  U32,
+  I64,
+  U64
+};
+
+#endif // TYPES_HPP_
