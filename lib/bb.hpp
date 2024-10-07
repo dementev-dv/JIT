@@ -35,6 +35,9 @@ class BasicBlock {
 
   std::list<Instruction*> instr_;
   InstrIt first_;   // Phis are before first_ instruction
+
+  std::vector<size_t> prec_:
+  std::vector<size_t> succ_;
 };
 
 #endif // BB_HPP_

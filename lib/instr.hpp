@@ -12,7 +12,8 @@ class Instruction {
     CALL,
     CAST,
     MOV,
-    PHI
+    PHI,
+    DECL
   }; 
 
   void AddUse(Instruction* i) { use_.push_back(i); }
@@ -20,7 +21,7 @@ class Instruction {
  private:
   DataType type_;
   OpCode code_;
-  size_t bb_;
+  BasicBlock* bb_;
   std::vector<Instruction*> use_;
 };
 
@@ -33,7 +34,7 @@ class ArithmeticInstr final : public Instruction {
     DIV
   };
 
-  ArithmeticInstr(size_t bb, AriCode code,
+  ArithmeticInstr(BasicBlock* bb, AriCode code,
        Instruction* op1, Instruction* op2, DataType type)
     : ari_(code),
       op1_(op1),
@@ -62,7 +63,7 @@ class CompareInstr final : public Instruction {
     GE
   };
 
-  CompareInstr(size_t bb, CmpCode code,
+  CompareInstr(BasicBlock* bb, CmpCode code,
        Instriction* op1, Instruction* op2)
     : cmp_(code),
       op1_(op1),
@@ -82,21 +83,30 @@ class CompareInstr final : public Instruction {
 
 class GotoInstr final : public Instruction {
  public:
-  GotoInstr(size_t bb, size_t dst)
+  GotoInstr(BasicBlock* bb, BasicBlock* dst)
     : code_(JMP),
       type_(VOID),
       dst_(dst),
       bb_(bb) {
   }
 
+  GotoInstr(BasicBlock* bb)
+    : code_(JMP),
+      type_(VOID),
+      bb_(bb),
+      dst_(NULL) {
+  }
+
+  void SetDst(BasicBlock* dst) { dst_ = dst; }
+
  private:
-  size_t dst_;
+  BasicBlock* dst_;
 };
 
 class GotoCondInstr final : public Instruction {
  public:
-  GotoCondInstr(size_t bb, Instruction* cond,
-       Instruction* dst1, Instruction* dst2)
+  GotoCondInstr(BasicBlock* bb, Instruction* cond,
+       BasicBlock* dst1, BasicBlock* dst2)
     : code_(JMPC),
       type_(void),
       bb_(bb),
@@ -106,15 +116,28 @@ class GotoCondInstr final : public Instruction {
     cond.AddUse((instruction*) this);
   }
 
+  GotoCondInstr(BasicBlock* bb, Instruction* cond)
+    : code_(JMPC),
+      type_(void),
+      bb_(bb),
+      dst1_(NULL),
+      dst2_(NULL),
+      cond_(cond) {
+    cond.AddUse((instruction*) this);
+  }
+
+  void SetDst1(BasicBlock* dst) { dst1_ = dst; }
+  void SetDst2(BasicBlock* dst) { dst2_ = dst; }
+
  private:
-  Instruction* dst1_;
-  Instruction* dst2_;
+  BasicBlock* dst1_;
+  BasicBlock* dst2_;
   Instruction* cond_;
 };
 
 class ReturnInstr final : public Instruction {
  public:
-  ReturnInstr(size_t bb, DataType type
+  ReturnInstr(BasicBlock* bb, DataType type
        Instruction* op)
     : code_(RET),
       bb_(bb),
@@ -132,7 +155,7 @@ class Function;
 
 class CallInstr final : public Instruction {
  public:
-  CallInstr(size_t bb, DataType type,
+  CallInstr(BasicBlock* bb, DataType type,
      Function* f, std::vector<Instruction*> args)
     : code_(CALL),
       bb_(bb),
@@ -143,7 +166,7 @@ class CallInstr final : public Instruction {
       i.AddUse((Instruction*) this);
   }
 
-  CallInstr(size_t bb, DataType type,
+  CallInstr(BasicBlock* bb, DataType type,
      Function* f, std::initializer_list<Instruction*> args)
     : code_(CALL),
       bb_(bb),
@@ -154,33 +177,34 @@ class CallInstr final : public Instruction {
       i.AddUse((Instruction*) this);
   }
 
+  CallInstr(size_t bb, DataType type, Function* f)
+    : bb_(bb),
+      type_(type),
+      callee_(f),
+      args_(0) {
+  }
+
  private:
   std::vector<Instruction*> args_;
   Function* callee_;
 };
 
 class PhiInstr final : public Instruction {
-  using PhiArg = std::pair<size_t, Instruction*>;
+  using PhiArg = std::pair<BasicBlock*, Instruction*>;
 
  public:
-  PhiInstr(size_t bb, DataType type,
-     std::vector<PhiArg> args)
+  PhiInstr(BasicBlock* bb, DataType type)
     : code_(PHI),
       bb_(bb),
       type_(type),
-      args_(args) {
-    for (const PhiArg a : args_)
-      a.second.AddUse((Instruction*) this);
+      args_(0) {
   }
 
-  PhiInstr(size_t bb, DataType type,
-     std::initializer_list<PhiArg> args)
-    : code_(PHI),
-      bb_(bb),
-      type_(type),
-      args_(args) {
-    for (const PhiArg a : args_)
-      a.second.AddUse((Instruction*) this);
+  void AddPhiArg(size_t bb, Instruction* op) {
+    assert(type_ == op.type());
+    PhiArg arg = std::pair<size_t, Instruction*>(bb, op);
+    args_.push_back(arg);
+    op.AddUse((Instruction*) this);
   }
 
  private:
