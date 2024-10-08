@@ -21,7 +21,6 @@ class Instruction {
  private:
   DataType type_;
   OpCode code_;
-  BasicBlock* bb_;
   std::vector<Instruction*> use_;
 };
 
@@ -34,14 +33,13 @@ class ArithmeticInstr final : public Instruction {
     DIV
   };
 
-  ArithmeticInstr(BasicBlock* bb, AriCode code,
-       Instruction* op1, Instruction* op2, DataType type)
+  ArithmeticInstr(AriCode code, , DataType type
+       Instruction* op1, Instruction* op2)
     : ari_(code),
       op1_(op1),
       op2_(op2),
       code_(ARI),
-      type_(type),
-      bb_(bb) {
+      type_(type) {
     op1.AddUse((Instruction*) this);
     op2.AddUse((Instruction*) this);
   }
@@ -63,14 +61,13 @@ class CompareInstr final : public Instruction {
     GE
   };
 
-  CompareInstr(BasicBlock* bb, CmpCode code,
+  CompareInstr(CmpCode code,
        Instriction* op1, Instruction* op2)
     : cmp_(code),
       op1_(op1),
       op2_(op2),
       code_(CMP),
-      type_(BOOL),
-      bb_(bb) {
+      type_(BOOL) {
     op1.AddUse((Instruction*) this);
     op2.AddUse((Instruction*) this);
   }
@@ -83,17 +80,15 @@ class CompareInstr final : public Instruction {
 
 class GotoInstr final : public Instruction {
  public:
-  GotoInstr(BasicBlock* bb, BasicBlock* dst)
+  GotoInstr(BasicBlock* dst)
     : code_(JMP),
       type_(VOID),
-      dst_(dst),
-      bb_(bb) {
+      dst_(dst) {
   }
 
-  GotoInstr(BasicBlock* bb)
+  GotoInstr()
     : code_(JMP),
       type_(VOID),
-      bb_(bb),
       dst_(NULL) {
   }
 
@@ -105,21 +100,19 @@ class GotoInstr final : public Instruction {
 
 class GotoCondInstr final : public Instruction {
  public:
-  GotoCondInstr(BasicBlock* bb, Instruction* cond,
+  GotoCondInstr(Instruction* cond,
        BasicBlock* dst1, BasicBlock* dst2)
     : code_(JMPC),
       type_(void),
-      bb_(bb),
       dst1_(dst1),
       dst2_(dst),
       cond_(cond) {
     cond.AddUse((instruction*) this);
   }
 
-  GotoCondInstr(BasicBlock* bb, Instruction* cond)
+  GotoCondInstr(Instruction* cond)
     : code_(JMPC),
       type_(void),
-      bb_(bb),
       dst1_(NULL),
       dst2_(NULL),
       cond_(cond) {
@@ -137,10 +130,8 @@ class GotoCondInstr final : public Instruction {
 
 class ReturnInstr final : public Instruction {
  public:
-  ReturnInstr(BasicBlock* bb, DataType type
-       Instruction* op)
+  ReturnInstr(DataType type, Instruction* op)
     : code_(RET),
-      bb_(bb),
       op_(op),
       type_(type) {
     if (op_ && type != VOID)
@@ -155,10 +146,9 @@ class Function;
 
 class CallInstr final : public Instruction {
  public:
-  CallInstr(BasicBlock* bb, DataType type,
-     Function* f, std::vector<Instruction*> args)
+  CallInstr(DataType type, Function* f,
+     std::vector<Instruction*> args)
     : code_(CALL),
-      bb_(bb),
       type_(type), 
       callee_(f) 
       args_(args) {
@@ -166,10 +156,9 @@ class CallInstr final : public Instruction {
       i.AddUse((Instruction*) this);
   }
 
-  CallInstr(BasicBlock* bb, DataType type,
-     Function* f, std::initializer_list<Instruction*> args)
+  CallInstr(DataType type, Function* f,
+     std::initializer_list<Instruction*> args)
     : code_(CALL),
-      bb_(bb),
       type_(type), 
       callee_(f) 
       args_(args) {
@@ -177,9 +166,8 @@ class CallInstr final : public Instruction {
       i.AddUse((Instruction*) this);
   }
 
-  CallInstr(size_t bb, DataType type, Function* f)
-    : bb_(bb),
-      type_(type),
+  CallInstr(DataType type, Function* f)
+    : type_(type),
       callee_(f),
       args_(0) {
   }
@@ -193,16 +181,15 @@ class PhiInstr final : public Instruction {
   using PhiArg = std::pair<BasicBlock*, Instruction*>;
 
  public:
-  PhiInstr(BasicBlock* bb, DataType type)
+  PhiInstr(DataType type)
     : code_(PHI),
-      bb_(bb),
       type_(type),
       args_(0) {
   }
 
-  void AddPhiArg(size_t bb, Instruction* op) {
+  void AddPhiArg(BasicBlock* bb, Instruction* op) {
     assert(type_ == op.type());
-    PhiArg arg = std::pair<size_t, Instruction*>(bb, op);
+    PhiArg arg = std::pair<BasicBlock*, Instruction*>(bb, op);
     args_.push_back(arg);
     op.AddUse((Instruction*) this);
   }
@@ -213,10 +200,8 @@ class PhiInstr final : public Instruction {
 
 class MovIntInstr final : public Instruction {
  public:
-  MovIntInstr(size_t bb, DataType type,
-     int64_t data)
+  MovIntInstr(DataType type, int64_t data)
     : code_(MOV),
-      bb_(bb),
       type_(type),
       data_(data) {
   }
@@ -227,10 +212,8 @@ class MovIntInstr final : public Instruction {
 
 class CastInstr final : public Instruction {
  public:
-  CastInstr(size_t bb, DataType type,
-     Instruction* op)
+  CastInstr(DataType type,  Instruction* op)
     : code_(CAST),
-      bb_(bb),
       type_(type),
       op_(op) {
     op.AddUse((Instruction*) this);
