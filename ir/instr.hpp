@@ -40,8 +40,8 @@ class ArithmeticInstr final : public Instruction {
       op2_(op2),
       code_(ARI),
       type_(type) {
-    op1.AddUse((Instruction*) this);
-    op2.AddUse((Instruction*) this);
+    op1->AddUse((Instruction*) this);
+    op2->AddUse((Instruction*) this);
   }
 
  private:
@@ -68,8 +68,8 @@ class CompareInstr final : public Instruction {
       op2_(op2),
       code_(CMP),
       type_(BOOL) {
-    op1.AddUse((Instruction*) this);
-    op2.AddUse((Instruction*) this);
+    op1->AddUse((Instruction*) this);
+    op2->AddUse((Instruction*) this);
   }
 
  private:
@@ -107,7 +107,7 @@ class GotoCondInstr final : public Instruction {
       dst1_(dst1),
       dst2_(dst),
       cond_(cond) {
-    cond.AddUse((instruction*) this);
+    cond->AddUse((instruction*) this);
   }
 
   GotoCondInstr(Instruction* cond)
@@ -116,7 +116,7 @@ class GotoCondInstr final : public Instruction {
       dst1_(NULL),
       dst2_(NULL),
       cond_(cond) {
-    cond.AddUse((instruction*) this);
+    cond->AddUse((instruction*) this);
   }
 
   void SetDst1(BasicBlock* dst) { dst1_ = dst; }
@@ -135,7 +135,7 @@ class ReturnInstr final : public Instruction {
       op_(op),
       type_(type) {
     if (op_ && type != VOID)
-      op_.AddUse((Instruction*) this);
+      op->AddUse((Instruction*) this);
   }
 
  private:
@@ -153,7 +153,7 @@ class CallInstr final : public Instruction {
       callee_(f) 
       args_(args) {
     for (const Instruction* i : args_)
-      i.AddUse((Instruction*) this);
+      i->AddUse((Instruction*) this);
   }
 
   CallInstr(DataType type, Function* f,
@@ -163,7 +163,7 @@ class CallInstr final : public Instruction {
       callee_(f) 
       args_(args) {
     for (const Instruction* i : args_)
-      i.AddUse((Instruction*) this);
+      i->AddUse((Instruction*) this);
   }
 
   CallInstr(DataType type, Function* f)
@@ -188,10 +188,10 @@ class PhiInstr final : public Instruction {
   }
 
   void AddPhiArg(BasicBlock* bb, Instruction* op) {
-    assert(type_ == op.type());
+    assert(type_ == op->type());
     PhiArg arg = std::pair<BasicBlock*, Instruction*>(bb, op);
     args_.push_back(arg);
-    op.AddUse((Instruction*) this);
+    op->AddUse((Instruction*) this);
   }
 
  private:
@@ -216,7 +216,7 @@ class CastInstr final : public Instruction {
     : code_(CAST),
       type_(type),
       op_(op) {
-    op.AddUse((Instruction*) this);
+    op->AddUse((Instruction*) this);
   }
 
  private:

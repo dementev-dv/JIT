@@ -28,7 +28,7 @@ class Builder final {
 
   Instruction* Mov(int64_t data);
 
-  Instruction* Phi());
+  Instruction* Phi();
 
   Instruction* Call(Function* f, std::initializer_list<Instruction*> args);
   Instruction* Call(Function* f, std::vector<Instruction*> args);
@@ -50,7 +50,7 @@ class Builder final {
 BasicBlock* Builder::BB(Function* f) {
     BasicBlock bb = new BasicBlock(f, id_++);
     bb_.push_back(bb);
-    Func.AddBB(bb);
+    f->AddBB(bb);
     return bb;
 }
 
@@ -75,8 +75,8 @@ Function* Builder::Func(DataType type, const char* name,
 }
 
 Instruction* Builder::Ari(AriCode code, Instruction* op1, Instruction* op2) {
-  assert(op1.type() == op2.type());
-  assert(op1.type() != VOID)
+  assert(op1->type() == op2->type());
+  assert(op1->type() != VOID)
   return (Instruction*) new ArithmeticInstr(code, op1, op2, op1.type());
 }
 
@@ -97,8 +97,8 @@ Instruction* Builder::Div(Instruction* op1, Instruction* op2) {
 }
 
 Instruction* Builder::Cmp(CmpCode code, Instruction* op1, Instruction* op2) {
-  assert(op1.type() == op2.type());
-  assert(op1.type() != VOID);
+  assert(op1->type() == op2->type());
+  assert(op1->type() != VOID);
   return (Instruction*) new CompareInstr(code, op1, op2);
 }
 
@@ -115,28 +115,28 @@ Instruction* Builder::Phi(DataType type) {
 }
 
 Instruction* Builder::Call(Function* f, std::vector<Instruction*> args) {
-  assert(args.size() == f.argn());
+  assert(args.size() == f->argn());
   for (size_t arg = 0; arg < args.size(); arg++) {
-    assert(args[arg].type() == f.arg(arg).type());
+    assert(args[arg]->type() == f->arg(arg)->type());
   }
-  return (Instruction*) new CallInstr(f.type(), f, args);
+  return (Instruction*) new CallInstr(f->type(), f, args);
 }
 
 Instruction* Builder::Call(Function* f, std::initializer_list<Instruction*> args) {
-  assert(args.size() == f.argn());
+  assert(args.size() == f->argn());
   for (size_t arg = 0; arg < args.size(); arg++) {
-    assert(args[arg].type() == f.arg(arg).type());
+    assert(args[arg]->type() == f->arg(arg)->type());
   }
-  return (Instruction*) new CallInstr(f.type(), f, args);
+  return (Instruction*) new CallInstr(f->type(), f, args);
 }
 
 Instruction* Builder::Call(Function* f) {
   assert(f.argn() == 0);
-  return (Instruction*) new CallInstr(f.type(), f);
+  return (Instruction*) new CallInstr(f->type(), f);
 }
 
 Instruction* Builder::Ret(Instruction* op) {
-  return (Instruction*) new ReturnInstr(op.type(), op);
+  return (Instruction*) new ReturnInstr(op->type(), op);
 }
 
 Instruction* Builder::Ret() {
