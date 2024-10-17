@@ -1,15 +1,16 @@
 #ifndef BB_HPP_
 #define BB_HPP_
 
-#include <list>
+#include <types.hpp>
+#include <instr.hpp>
 
-#include "types.hpp"
-#include "instr.hpp"
+#include <list>
+#include <iterator>
 
 class Function;
 
 class BasicBlock {
-  using InstrIt = std::list<Instruction*>::iterator;
+  using InstrIt = typename std::list<Instruction*>::iterator;
 
  public:
   BasicBlock(size_t id, Function* f) 
@@ -18,13 +19,13 @@ class BasicBlock {
     first_ = instr_.begin();
   }
 
-  id() { return id_; }
+  size_t id() { return id_; }
 
   void AddInstr(Instruction* i) { instr_.push_back(i); }
   void AddPhi(Instruction* i) { instr_.insert(i, first_); }
   void InsertInstr(Instruction* i, Instruction* next) {
     InsrtIt it = instr_.begin();
-    while(it !+ instr_.end() && *it != i)
+    while(it != instr_.end() && *it != i)
       it++;
     instr_.insert(i, it);
   }

@@ -1,6 +1,13 @@
 #ifndef INSTR_HPP_
 #define INSTR_HPP_
 
+#include <types.hpp>
+
+#include <vector>
+#include <initializer_list>
+
+class BasicBlock;
+
 enum OpCode {
   ARI,
   CMP,
@@ -23,6 +30,8 @@ class Instruction {
 
   void AddUse(Instruction* i) { use_.push_back(i); }
 
+  DataType type() { return type_; }
+
  private:
   DataType type_;
   OpCode code_;
@@ -38,15 +47,12 @@ enum AriCode {
 
 class ArithmeticInstr final : public Instruction {
  public:
-  ArithmeticInstr(AriCode code, , DataType type
+  ArithmeticInstr(AriCode code, DataType type,
        Instruction* op1, Instruction* op2)
-    : Instruction(type, ARI)
+    : Instruction(type, ARI),
       ari_(code),
       op1_(op1),
-      op2_(op2) {
-    op1->AddUse((Instruction*) this);
-    op2->AddUse((Instruction*) this);
-  }
+      op2_(op2) { }
 
  private:
   AriCode ari_;
@@ -66,14 +72,11 @@ enum CmpCode {
 class CompareInstr final : public Instruction {
  public:
   CompareInstr(CmpCode code,
-       Instriction* op1, Instruction* op2)
-    : Instruction(BOOL, CMP)
+       Instruction* op1, Instruction* op2)
+    : Instruction(BOOL, CMP),
       cmp_(code),
       op1_(op1),
-      op2_(op2) {
-    op1->AddUse((Instruction*) this);
-    op2->AddUse((Instruction*) this);
-  }
+      op2_(op2) { }
 
  private:
   CmpCode cmp_;
@@ -105,18 +108,14 @@ class GotoCondInstr final : public Instruction {
        BasicBlock* dst1, BasicBlock* dst2)
     : Instruction(VOID, JMPC),
       dst1_(dst1),
-      dst2_(dst),
-      cond_(cond) {
-    cond->AddUse((instruction*) this);
-  }
+      dst2_(dst2),
+      cond_(cond) { }
 
   GotoCondInstr(Instruction* cond)
-    : Instruction(VOID, JMPC)
+    : Instruction(VOID, JMPC),
       dst1_(NULL),
       dst2_(NULL),
-      cond_(cond) {
-    cond->AddUse((instruction*) this);
-  }
+      cond_(cond) { }
 
   void SetDst1(BasicBlock* dst) { dst1_ = dst; }
   void SetDst2(BasicBlock* dst) { dst2_ = dst; }
@@ -131,10 +130,7 @@ class ReturnInstr final : public Instruction {
  public:
   ReturnInstr(DataType type, Instruction* op)
     : Instruction(type, RET),
-      op_(op) {
-    if (op_ && type != VOID)
-      op->AddUse((Instruction*) this);
-  }
+      op_(op) { }
 
  private:
   Instruction* op_;
@@ -144,33 +140,14 @@ class Function;
 
 class CallInstr final : public Instruction {
  public:
-  CallInstr(DataType type, Function* f,
-     std::vector<Instruction*> args)
-    : Instruction(type, CALL), 
-      callee_(f) 
-      args_(args) {
-    for (const Instruction* i : args_)
-      i->AddUse((Instruction*) this);
-  }
-
-  CallInstr(DataType type, Function* f,
-     std::initializer_list<Instruction*> args)
-    : Instruction(type, CALL) 
-      callee_(f) 
-      args_(args) {
-    for (const Instruction* i : args_)
-      i->AddUse((Instruction*) this);
-  }
-
   CallInstr(DataType type, Function* f)
-    : type_(type),
+    : Instruction(type, CALL),
       callee_(f),
-      args_(0) {
-  }
+      args_(0) { }
 
  private:
-  std::vector<Instruction*> args_;
   Function* callee_;
+  std::vector<Instruction*> args_;
 };
 
 class PhiInstr final : public Instruction {
@@ -178,24 +155,22 @@ class PhiInstr final : public Instruction {
 
  public:
   PhiInstr(DataType type)
-    : Instruction(type, PHI)
+    : Instruction(type, PHI),
       args_(0) {
   }
 
   void AddPhiArg(BasicBlock* bb, Instruction* op) {
-    assert(type_ == op->type());
     PhiArg arg = std::pair<BasicBlock*, Instruction*>(bb, op);
     args_.push_back(arg);
-    op->AddUse((Instruction*) this);
   }
 
  private:
   std::vector<PhiArg> args_;
 };
 
-class MovIntInstr final : public Instruction {
+class MovInstr final : public Instruction {
  public:
-  MovIntInstr(DataType type, int64_t data)
+  MovInstr(DataType type, int64_t data)
     : Instruction(type, MOV),
       data_(data) {
   }
@@ -208,9 +183,7 @@ class CastInstr final : public Instruction {
  public:
   CastInstr(DataType type,  Instruction* op)
     : Instruction(type, CAST),
-      op_(op) {
-    op->AddUse((Instruction*) this);
-  }
+      op_(op) { }
 
  private:
   Instruction* op_;

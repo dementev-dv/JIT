@@ -1,7 +1,7 @@
 #ifndef TYPES_HPP_
 #define TYPES_HPP_
 
-enum class DataType {
+enum DataType {
   VOID,
   BOOL,
   I8,

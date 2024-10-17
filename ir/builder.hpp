@@ -1,6 +1,11 @@
 #ifndef BUILDER_HPP_
 #define BUILDER_HPP_
 
+#include <types.hpp>
+#include <instr.hpp>
+#include <bb.hpp>
+#include <func.hpp>
+
 class Builder final {
  public:
   Builder();
@@ -23,21 +28,23 @@ class Builder final {
   Instruction* GotoCond(Instruction* cond, BasicBlock* dst1, BasicBlock* dst2);  
   Instruction* GotoCond(Instruction* cond);
 
-  Instruction* Mov(int64_t data);
+  Instruction* Mov(DataType type, int64_t data);
 
-  Instruction* Phi();
+  PhiInstr* Phi();
 
   Instruction* Call(Function* f, std::initializer_list<Instruction*> args);
   Instruction* Call(Function* f, std::vector<Instruction*> args);
+  Instruction* Call(Function* f);
 
   Instruction* Cast(DataType type, Instruction* op);
 
   Instruction* Ret(Instruction* op);
+  Instruction* Ret();
 
-  void DumpCFG(const char* path);
+  // void DumpCFG(const char* path);
 
  private:
-  Instruction* Ari(Instruction* op1, Instruction* op2);
+  Instruction* Ari(AriCode code, Instruction* op1, Instruction* op2);
 
   std::vector<Function*> func_;
 
@@ -46,13 +53,13 @@ class Builder final {
 };
 
 Function* Builder::Func(DataType type, const char* name, size_t n) {
-  Function* f = new Funnction(type, name, n);
+  Function* f = new Function(type, name, n);
   func_.push_back(f);
   return f;
 }
 
 BasicBlock* Builder::BB(Function* f) {
-  BasicBlock bb = new BasicBlock(f, id_++);
+  BasicBlock* bb = new BasicBlock(f, id_++);
   bb_.push_back(bb);
   f->AddBB(bb);
   return bb;
@@ -64,8 +71,12 @@ Instruction* Builder::Arg(DataType type) {
 
 Instruction* Builder::Ari(AriCode code, Instruction* op1, Instruction* op2) {
   assert(op1->type() == op2->type());
-  assert(op1->type() != VOID)
-  return (Instruction*) new ArithmeticInstr(code, op1, op2, op1.type());
+  assert(op1->type() != VOID);
+  
+  Instruction* i = (Instruction*) new ArithmeticInstr(code, op1, op2, op1->type());
+  op1->AddUse(i);
+  op2->AddUse(i);
+  return i;
 }
 
 Instruction* Builder::Add(Instruction* op1, Instruction* op2) {
@@ -87,27 +98,36 @@ Instruction* Builder::Div(Instruction* op1, Instruction* op2) {
 Instruction* Builder::Cmp(CmpCode code, Instruction* op1, Instruction* op2) {
   assert(op1->type() == op2->type());
   assert(op1->type() != VOID);
-  return (Instruction*) new CompareInstr(code, op1, op2);
+
+  Instruction* i = (Instruction*) new CompareInstr(code, op1, op2);
+  op1->AddUse(i);
+  op2->AddUse(i);
+  return i;
 }
 
-Instruction* Builder::Goto(BasicVlock* dst) {
+Instruction* Builder::Goto(BasicBlock* dst) {
   return (Instruction*) new GotoInstr(dst);
 }
 
-void Builder::GotoCond(Instruction* cond, BasicBlock* dst1, BasicBlock* bb2) {
+Instruction* Builder::GotoCond(Instruction* cond, BasicBlock* dst1, BasicBlock* dst2) {
   return (Instruction*) new GotoCondInstr(cond, dst1, dst2);
 }
 
-Instruction* Builder::Phi(DataType type) {
-  return (Instruction*) new PhiInstr(type);
+PhiInstr* Builder::Phi(DataType type) {
+  return new PhiInstr(type);
 }
 
 Instruction* Builder::Call(Function* f, std::vector<Instruction*> args) {
   assert(args.size() == f->argn());
+  CallInstr * i = new CallInstr(f->type(), f);
+
   for (size_t arg = 0; arg < args.size(); arg++) {
     assert(args[arg]->type() == f->arg(arg)->type());
+    i->AddArg(args[arg]);
+    args[arg]->AddUse(i);
   }
-  return (Instruction*) new CallInstr(f->type(), f, args);
+
+  return (Instruction*) i;
 }
 
 Instruction* Builder::Call(Function* f, std::initializer_list<Instruction*> args) {
@@ -119,7 +139,7 @@ Instruction* Builder::Call(Function* f, std::initializer_list<Instruction*> args
 }
 
 Instruction* Builder::Call(Function* f) {
-  assert(f.argn() == 0);
+  assert(f->argn() == 0);
   return (Instruction*) new CallInstr(f->type(), f);
 }
 
@@ -136,12 +156,12 @@ Instruction* Builder::Mov(DataType type, int64_t val) {
 }
 
 Instruction* Builder::Cast(DataType type, Instruction* i) {
-  assert(familiar(t1, t2));
+  assert(familiar(type, i->type()));
   return (Instruction*) new CastInstr(type, i);
 }
 
-void Builder::DumpCFG(const char* path) {
-  
-}
+// void Builder::DumpCFG(const char* path) {
+
+// }
 
 #endif // BUILDER_HPP_
