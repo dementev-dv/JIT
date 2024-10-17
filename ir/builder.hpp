@@ -5,11 +5,8 @@ class Builder final {
  public:
   Builder();
 
-  Function* Func(DataType type, const char* name);
-  Function* Func(DataType type, const char* name,
-      std::initializer_list<DataType> args);
-  Function* Func(DataType type, const char* name,
-      std::vector<DataType> args);
+  Function* Func(DataType type, const char* name, size_t n);
+  Instruction* Arg(DataType type);
 
   BasicBlock* BB(Function* f);
 
@@ -37,9 +34,10 @@ class Builder final {
 
   Instruction* Ret(Instruction* op);
 
+  void DumpCFG(const char* path);
+
  private:
   Instruction* Ari(Instruction* op1, Instruction* op2);
-
 
   std::vector<Function*> func_;
 
@@ -47,31 +45,21 @@ class Builder final {
   size_t id_;
 };
 
+Function* Builder::Func(DataType type, const char* name, size_t n) {
+  Function* f = new Funnction(type, name, n);
+  func_.push_back(f);
+  return f;
+}
+
 BasicBlock* Builder::BB(Function* f) {
-    BasicBlock bb = new BasicBlock(f, id_++);
-    bb_.push_back(bb);
-    f->AddBB(bb);
-    return bb;
+  BasicBlock bb = new BasicBlock(f, id_++);
+  bb_.push_back(bb);
+  f->AddBB(bb);
+  return bb;
 }
 
-Function* Builder::Func(DataType type, const char* name) {
-  Function* f = new Funnction(type, name);
-  func_.push_back(f);
-  return f;
-}
-
-Function* Builder::Func(DataType type, const char* name,
-    std::initializer_list<DataType> args) {
-  Function* f = new Funnction(type, name, args);
-  func_.push_back(f);
-  return f;
-}
-
-Function* Builder::Func(DataType type, const char* name,
-    std::vector<DataType> args) {
-  Function* f = new Funnction(type, name, args);
-  func_.push_back(f);
-  return f;
+Instruction* Builder::Arg(DataType type) {
+  return (Instruction*) new DeclInstr(type);
 }
 
 Instruction* Builder::Ari(AriCode code, Instruction* op1, Instruction* op2) {
@@ -106,7 +94,7 @@ Instruction* Builder::Goto(BasicVlock* dst) {
   return (Instruction*) new GotoInstr(dst);
 }
 
-void Builder::GotoCondInstr(Instruction* cond, BasicBlock* dst1, BasicBlock* bb2) {
+void Builder::GotoCond(Instruction* cond, BasicBlock* dst1, BasicBlock* bb2) {
   return (Instruction*) new GotoCondInstr(cond, dst1, dst2);
 }
 
@@ -150,6 +138,10 @@ Instruction* Builder::Mov(DataType type, int64_t val) {
 Instruction* Builder::Cast(DataType type, Instruction* i) {
   assert(familiar(t1, t2));
   return (Instruction*) new CastInstr(type, i);
+}
+
+void Builder::DumpCFG(const char* path) {
+  
 }
 
 #endif // BUILDER_HPP_

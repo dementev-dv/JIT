@@ -9,39 +9,31 @@
 
 class DeclInstr final : Instruction {
  public:
-  DeclInstr(BasicBlock* bb, DataType type)
-    : bb_(bb),
-      type_(type) {
+  DeclInstr(DataType type)
+    : Instruction(type, DECL) {
   }
 }
 
 class Function final {
  public:
-  Function(DataType type, const char* name,
-      std::initializer_list<DataType> args)
+  Function(DataType type, const char* name, size_t n)
     : name_(name),
       type_(type),
-      args_(args) {
-  }
-
-  Function(DataType type, const char* name,
-      std::initializer_list<DataType> args)
-    : name_(name),
-      type_(type) {
-    for ()
-  }
-
-  Function(DataType type, const char* name)
-    : name_(name),
-      type_(type),
-      args_(0) {
-  }
+      argn_(n),
+      args_(0),
+      nbb_(0),
+      bb_(0) { }
 
   void AddBB(BasicBlock* bb) { bb_.push_back(bb); }
 
   size_t argn() { return nargs_; }
 
   DataType arg(size_t n) { return args_[n]; }
+
+  void AddArg(Instruction* a) {
+    args_.push_back(a);
+    assert(args_.size < argn_);
+  }
 
  private:
   std::string name_;

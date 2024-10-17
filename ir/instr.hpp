@@ -1,20 +1,25 @@
 #ifndef INSTR_HPP_
 #define INSTR_HPP_
 
+enum OpCode {
+  ARI,
+  CMP,
+  JMP,
+  JMPC,
+  RET,
+  CALL,
+  CAST,
+  MOV,
+  PHI,
+  DECL
+};
+
 class Instruction {
  public:
-  enum OpCode {
-    ARI,
-    CMP,
-    JMP,
-    JMPC,
-    RET,
-    CALL,
-    CAST,
-    MOV,
-    PHI,
-    DECL
-  }; 
+  Instruction(DataType type, OpCode code)
+    : type_(type),
+      code_(code),
+      use_(0) { }
 
   void AddUse(Instruction* i) { use_.push_back(i); }
 
@@ -24,22 +29,21 @@ class Instruction {
   std::vector<Instruction*> use_;
 };
 
+enum AriCode {
+  ADD,
+  SUB,
+  MUL,
+  DIV
+};
+
 class ArithmeticInstr final : public Instruction {
  public:
-  enum AriCode {
-    ADD,
-    SUB,
-    MUL,
-    DIV
-  };
-
   ArithmeticInstr(AriCode code, , DataType type
        Instruction* op1, Instruction* op2)
-    : ari_(code),
+    : Instruction(type, ARI)
+      ari_(code),
       op1_(op1),
-      op2_(op2),
-      code_(ARI),
-      type_(type) {
+      op2_(op2) {
     op1->AddUse((Instruction*) this);
     op2->AddUse((Instruction*) this);
   }
@@ -50,24 +54,23 @@ class ArithmeticInstr final : public Instruction {
   Instruction* op2_;
 };
 
+enum CmpCode {
+  EQ,
+  NE,
+  LT,
+  LE,
+  GT,
+  GE
+};
+
 class CompareInstr final : public Instruction {
  public:
-  enum CmpCode {
-    EQ,
-    NE,
-    LT,
-    LE,
-    GT,
-    GE
-  };
-
   CompareInstr(CmpCode code,
        Instriction* op1, Instruction* op2)
-    : cmp_(code),
+    : Instruction(BOOL, CMP)
+      cmp_(code),
       op1_(op1),
-      op2_(op2),
-      code_(CMP),
-      type_(BOOL) {
+      op2_(op2) {
     op1->AddUse((Instruction*) this);
     op2->AddUse((Instruction*) this);
   }
@@ -81,14 +84,12 @@ class CompareInstr final : public Instruction {
 class GotoInstr final : public Instruction {
  public:
   GotoInstr(BasicBlock* dst)
-    : code_(JMP),
-      type_(VOID),
+    : Instruction(VOID, JMP),
       dst_(dst) {
   }
 
   GotoInstr()
-    : code_(JMP),
-      type_(VOID),
+    : Instruction(VOID, JMP),
       dst_(NULL) {
   }
 
@@ -102,8 +103,7 @@ class GotoCondInstr final : public Instruction {
  public:
   GotoCondInstr(Instruction* cond,
        BasicBlock* dst1, BasicBlock* dst2)
-    : code_(JMPC),
-      type_(void),
+    : Instruction(VOID, JMPC),
       dst1_(dst1),
       dst2_(dst),
       cond_(cond) {
@@ -111,8 +111,7 @@ class GotoCondInstr final : public Instruction {
   }
 
   GotoCondInstr(Instruction* cond)
-    : code_(JMPC),
-      type_(void),
+    : Instruction(VOID, JMPC)
       dst1_(NULL),
       dst2_(NULL),
       cond_(cond) {
@@ -131,9 +130,8 @@ class GotoCondInstr final : public Instruction {
 class ReturnInstr final : public Instruction {
  public:
   ReturnInstr(DataType type, Instruction* op)
-    : code_(RET),
-      op_(op),
-      type_(type) {
+    : Instruction(type, RET),
+      op_(op) {
     if (op_ && type != VOID)
       op->AddUse((Instruction*) this);
   }
@@ -148,8 +146,7 @@ class CallInstr final : public Instruction {
  public:
   CallInstr(DataType type, Function* f,
      std::vector<Instruction*> args)
-    : code_(CALL),
-      type_(type), 
+    : Instruction(type, CALL), 
       callee_(f) 
       args_(args) {
     for (const Instruction* i : args_)
@@ -158,8 +155,7 @@ class CallInstr final : public Instruction {
 
   CallInstr(DataType type, Function* f,
      std::initializer_list<Instruction*> args)
-    : code_(CALL),
-      type_(type), 
+    : Instruction(type, CALL) 
       callee_(f) 
       args_(args) {
     for (const Instruction* i : args_)
@@ -178,12 +174,11 @@ class CallInstr final : public Instruction {
 };
 
 class PhiInstr final : public Instruction {
-  using PhiArg = std::pair<BasicBlock*, Instruction*>;
+  using PhiArg = typename std::pair<BasicBlock*, Instruction*>;
 
  public:
   PhiInstr(DataType type)
-    : code_(PHI),
-      type_(type),
+    : Instruction(type, PHI)
       args_(0) {
   }
 
@@ -201,8 +196,7 @@ class PhiInstr final : public Instruction {
 class MovIntInstr final : public Instruction {
  public:
   MovIntInstr(DataType type, int64_t data)
-    : code_(MOV),
-      type_(type),
+    : Instruction(type, MOV),
       data_(data) {
   }
 
@@ -213,8 +207,7 @@ class MovIntInstr final : public Instruction {
 class CastInstr final : public Instruction {
  public:
   CastInstr(DataType type,  Instruction* op)
-    : code_(CAST),
-      type_(type),
+    : Instruction(type, CAST),
       op_(op) {
     op->AddUse((Instruction*) this);
   }
