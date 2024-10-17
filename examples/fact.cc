@@ -33,17 +33,16 @@ int main() {
   bb_cond->AddInstr(cond);
   bb_cond->AddInstr(jmp0);
 
-  auto f2 = build.Mul(f1, i1);
-  auto i2 = build.Add(i1, inc);
+  auto f2 = build.Mul((Instruction*) f1, (Instruction*) i1);
+  auto i2 = build.Add((Instruction*) i1, inc);
   auto jmp1 = build.Goto(bb_cond);
 
   bb_body->AddInstr(f2);
   bb_body->AddInstr(i2);
   bb_body->AddInstr(jmp1);
 
-  auto ret = build.Ret(i1);
+  auto ret = build.Ret((Instruction*) i1);
 
-  bb_end->AddInstr(f);
   bb_end->AddInstr(ret);
 
   f1->AddPhiArg(bb_init, f0);
@@ -52,5 +51,5 @@ int main() {
   i1->AddPhiArg(bb_init, i0);
   i1->AddPhiArg(bb_body, i2);
 
-  build.Dump("graph.gv");
+  // build.Dump("graph.gv");
 }
