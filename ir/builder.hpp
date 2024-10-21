@@ -6,50 +6,60 @@
 #include <bb.hpp>
 #include <func.hpp>
 
+struct FuncContext {
+  size_t bbid{0};
+  size_t instrid{0};
+
+};
+
 class Builder final {
+ private:
+  ArithmeticInstr* Ari(AriCode code, Instruction* op1, Instruction* op2);
+
+  std::vector<FuncContext> context_;
+  size_t func_;
+  BasicBlock* curr_;
+
  public:
   Builder();
 
   Function* Func(DataType type, const char* name, size_t n);
-  Instruction* Arg(DataType type);
+  DeclInstr* Arg(Function* f, DataType type);
 
   BasicBlock* BB(Function* f);
 
-  Instruction* Add(Instruction* op1, Instruction* op2);
-  Instruction* Sub(Instruction* op1, Instruction* op2);
-  Instruction* Mul(Instruction* op1, Instruction* op2);
-  Instruction* Div(Instruction* op1, Instruction* op2);
+  ArithmeticInstr* Add(Instruction* op1, Instruction* op2);
+  ArithmeticInstr* Sub(Instruction* op1, Instruction* op2);
+  ArithmeticInstr* Mul(Instruction* op1, Instruction* op2);
+  ArithmeticInstr* Div(Instruction* op1, Instruction* op2);
 
-  Instruction* Cmp(CmpCode code, Instruction* op1, Instruction* op2);
+  CompareInstr* Cmp(CmpCode code, Instruction* op1, Instruction* op2);
 
-  Instruction* Goto(BasicBlock* dst);
-  Instruction* Goto();
+  GotoInstr* Goto(BasicBlock* dst);
+  GotoInstr* Goto();
 
-  Instruction* GotoCond(Instruction* cond, BasicBlock* dst1, BasicBlock* dst2);  
-  Instruction* GotoCond(Instruction* cond);
+  GotoCondInstr* GotoCond(Instruction* cond, BasicBlock* dst1, BasicBlock* dst2);  
+  GotoCondInstr* GotoCond(Instruction* cond);
 
-  Instruction* Mov(DataType type, int64_t data);
+  MovInstr* Mov(DataType type, int64_t data);
 
   PhiInstr* Phi();
 
-  Instruction* Call(Function* f, std::initializer_list<Instruction*> args);
-  Instruction* Call(Function* f, std::vector<Instruction*> args);
-  Instruction* Call(Function* f);
+  void AddPhiArg(PhiInstr* phi, BasicBlock* bb, Instruction* i) {
+    i->AddUse(phi);
+    phi->AddPhiArg(std::pair<BasicBlock*, Instruction*>(bb, i));
+  }
 
-  Instruction* Cast(DataType type, Instruction* op);
+  CallInstr* Call(Function* f, std::initializer_list<Instruction*> args);
+  CallInstr* Call(Function* f, std::vector<Instruction*> args);
+  CallInstr* Call(Function* f);
 
-  Instruction* Ret(Instruction* op);
-  Instruction* Ret();
+  CastInstr* Cast(DataType type, Instruction* op);
 
-  // void DumpCFG(const char* path);
+  ReturnInstr* Ret(Instruction* op);
+  ReturnInstr* Ret();
 
- private:
-  Instruction* Ari(AriCode code, Instruction* op1, Instruction* op2);
-
-  std::vector<Function*> func_;
-
-  std::vector<BasicBlock*> bb_;
-  size_t id_;
+  void SetBB(BasicBlock* bb) { curr_ = bb; }
 };
 
 Function* Builder::Func(DataType type, const char* name, size_t n) {
@@ -59,109 +69,122 @@ Function* Builder::Func(DataType type, const char* name, size_t n) {
 }
 
 BasicBlock* Builder::BB(Function* f) {
-  BasicBlock* bb = new BasicBlock(f, id_++);
-  bb_.push_back(bb);
+  BasicBlock* bb = new BasicBlock(bbid_++, f);
   f->AddBB(bb);
   return bb;
 }
 
-Instruction* Builder::Arg(DataType type) {
-  return (Instruction*) new DeclInstr(type);
+DeclInstr* Builder::Arg(Function* f, DataType type) {
+  DeclInstr* i = new DeclInstr(type);
+  f->AddArg(i);
 }
 
-Instruction* Builder::Ari(AriCode code, Instruction* op1, Instruction* op2) {
-  assert(op1->type() == op2->type());
-  assert(op1->type() != VOID);
-  
-  Instruction* i = (Instruction*) new ArithmeticInstr(code, op1, op2, op1->type());
+ArithmeticInstr* Builder::Ari(AriCode code, Instruction* op1, Instruction* op2) {
+  ArithmeticInstr* i = new ArithmeticInstr(code, op1->type(), op1, op2);
   op1->AddUse(i);
   op2->AddUse(i);
+  curr_->AddInstr(i);
   return i;
 }
 
-Instruction* Builder::Add(Instruction* op1, Instruction* op2) {
+ArithmeticInstr* Builder::Add(Instruction* op1, Instruction* op2) {
   return Ari(ADD, op1, op2);
 }
 
-Instruction* Builder::Sub(Instruction* op1, Instruction* op2) {
+ArithmeticInstr* Builder::Sub(Instruction* op1, Instruction* op2) {
   return Ari(SUB, op1, op2);
 }
 
-Instruction* Builder::Mul(Instruction* op1, Instruction* op2) {
+ArithmeticInstr* Builder::Mul(Instruction* op1, Instruction* op2) {
   return Ari(MUL, op1, op2);
 }
 
-Instruction* Builder::Div(Instruction* op1, Instruction* op2) {
+ArithmeticInstr* Builder::Div(Instruction* op1, Instruction* op2) {
   return Ari(DIV, op1, op2);
 }
 
-Instruction* Builder::Cmp(CmpCode code, Instruction* op1, Instruction* op2) {
-  assert(op1->type() == op2->type());
-  assert(op1->type() != VOID);
-
-  Instruction* i = (Instruction*) new CompareInstr(code, op1, op2);
+CompareInstr* Builder::Cmp(CmpCode code, Instruction* op1, Instruction* op2) {
+  CompareInstr* i = new CompareInstr(code, op1, op2);
   op1->AddUse(i);
   op2->AddUse(i);
+  curr_->AddInstr(i);
   return i;
 }
 
-Instruction* Builder::Goto(BasicBlock* dst) {
-  return (Instruction*) new GotoInstr(dst);
+GotoInstr* Builder::Goto(BasicBlock* dst) {
+  GotoInstr* i = new GotoInstr(dst);
+  curr_->AddInstr(i);
+  curr_->SetTrueSucc(dst);
+  dst->AddPrec(curr_);
+  return i;
 }
 
-Instruction* Builder::GotoCond(Instruction* cond, BasicBlock* dst1, BasicBlock* dst2) {
-  return (Instruction*) new GotoCondInstr(cond, dst1, dst2);
+GotoCondInstr* Builder::GotoCond(Instruction* cond, BasicBlock* dst1, BasicBlock* dst2) {
+  GotoCondInstr* i = new GotoCondInstr(cond, dst1, dst2);
+  curr_->SetTrueSucc(dst1);
+  curr_->SetFalseSucc(dst2);
+  dst1->AddPrec(curr_);
+  dst2->AddPrec(curr_);
+  return i;
 }
 
 PhiInstr* Builder::Phi(DataType type) {
-  return new PhiInstr(type);
+  PhiInstr* i = new PhiInstr(type);
+  curr_->AddPhi(i);
 }
 
 Instruction* Builder::Call(Function* f, std::vector<Instruction*> args) {
-  assert(args.size() == f->argn());
   CallInstr * i = new CallInstr(f->type(), f);
 
   for (size_t arg = 0; arg < args.size(); arg++) {
-    assert(args[arg]->type() == f->arg(arg)->type());
     i->AddArg(args[arg]);
     args[arg]->AddUse(i);
   }
 
-  return (Instruction*) i;
+  curr_->AddInstr(i);
+  return i;
 }
 
-Instruction* Builder::Call(Function* f, std::initializer_list<Instruction*> args) {
-  assert(args.size() == f->argn());
-  for (size_t arg = 0; arg < args.size(); arg++) {
-    assert(args[arg]->type() == f->arg(arg)->type());
+CallInstr* Builder::Call(Function* f, std::initializer_list<Instruction*> args) {
+  std::vector<Instruction*> a{args};
+  CallInstr * i = new CallInstr(f->type(), f);
+
+  for (size_t arg = 0; arg < a.size(); arg++) {
+    i->AddArg(a[arg]);
   }
-  return (Instruction*) new CallInstr(f->type(), f, args);
+
+  curr_->AddInstr(i);
+  return i;
 }
 
-Instruction* Builder::Call(Function* f) {
-  assert(f->argn() == 0);
-  return (Instruction*) new CallInstr(f->type(), f);
+CallInstr* Builder::Call(Function* f) {
+  CallInstr* i = new CallInstr(f->type(), f);
+  curr_->AddInstr(i);
+  return i;
 }
 
-Instruction* Builder::Ret(Instruction* op) {
-  return (Instruction*) new ReturnInstr(op->type(), op);
+ReturnInstr* Builder::Ret(Instruction* op) {
+  ReturnInstr* i = new ReturnInstr(op->type(), op);
+  op->AddUse(i);
+  curr_->AddInstr(i);
+  return i;
 }
 
-Instruction* Builder::Ret() {
-  return (Instruction*) new ReturnInstr(VOID, NULL);
+ReturnInstr* Builder::Ret() {
+  ReturnInstr* i = new ReturnInstr(VOID, NULL);
+  curr_->AddInstr(i);
 }
 
-Instruction* Builder::Mov(DataType type, int64_t val) {
-  return (Instruction*) new MovInstr(type, val);
+MovInstr* Builder::Mov(DataType type, int64_t val) {
+  MovInstr* i = new MovInstr(type, val);
+  curr_->AddInstr(i);
+  return i;
 }
 
-Instruction* Builder::Cast(DataType type, Instruction* i) {
-  assert(familiar(type, i->type()));
-  return (Instruction*) new CastInstr(type, i);
+CastInstr* Builder::Cast(DataType type, Instruction* op) {
+  CastInstr* i = new CastInstr(type, op);
+  curr_->AddInstr(i);
+  op->AddUse(i);
 }
-
-// void Builder::DumpCFG(const char* path) {
-
-// }
 
 #endif // BUILDER_HPP_

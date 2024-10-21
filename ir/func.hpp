@@ -5,14 +5,9 @@
 #include <string>
 
 #include <types.hpp>
-#include <instr.hpp>
+#include <bb.hpp>
 
-class DeclInstr final : Instruction {
- public:
-  DeclInstr(DataType type)
-    : Instruction(type, DECL) {
-  }
-};
+class DeclInstr;
 
 class Function final {
  public:
@@ -26,14 +21,15 @@ class Function final {
 
   void AddBB(BasicBlock* bb) { bb_.push_back(bb); }
 
-  size_t argn() { return argn_; }
+  size_t argn() { return args_.size(); }
 
   Instruction* arg(size_t n) { return args_[n]; }
 
   void AddArg(Instruction* a) {
     args_.push_back(a);
-    assert(args_.size() < argn_);
   }
+
+  std::string name() { return name_; }
 
   DataType type() { return type_; }
 
@@ -41,11 +37,9 @@ class Function final {
   std::string name_;
   DataType type_;
 
-  size_t argn_;
-  std::vector<Instruction*> args_;
+  std::vector<DeclInstr*> args_;
 
-  size_t nbb_;
   std::vector<BasicBlock*> bb_;
-}
+};
 
 #endif // FUNC_HPP_
