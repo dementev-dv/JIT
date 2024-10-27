@@ -7,4 +7,5 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_FLAGS "-Wall -Wpedantic -Wextra")
 
 add_subdirectory(ir)
+add_subdirectory(util)
 add_subdirectory(examples)

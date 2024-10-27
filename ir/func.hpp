@@ -11,21 +11,19 @@ class DeclInstr;
 
 class Function final {
  public:
-  Function(DataType type, const char* name, size_t n)
+  Function(DataType type, const char* name)
     : name_(name),
       type_(type),
-      argn_(n),
       args_(0),
-      nbb_(0),
-      bb_(0) { }
+      entry_(nullptr) { }
 
-  void AddBB(BasicBlock* bb) { bb_.push_back(bb); }
+  void SetEntry(BasicBlock* bb) { entry_ = bb; }
 
   size_t argn() { return args_.size(); }
 
-  Instruction* arg(size_t n) { return args_[n]; }
+  DeclInstr* arg(size_t n) { return args_[n]; }
 
-  void AddArg(Instruction* a) {
+  void AddArg(DeclInstr* a) {
     args_.push_back(a);
   }
 
@@ -39,7 +37,7 @@ class Function final {
 
   std::vector<DeclInstr*> args_;
 
-  std::vector<BasicBlock*> bb_;
+  BasicBlock* entry_;
 };
 
 #endif // FUNC_HPP_

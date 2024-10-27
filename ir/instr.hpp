@@ -36,9 +36,9 @@ class Instruction {
 
   size_t id() { return id_; }
 
-  virtual void Dump(std::ofstream out);
+  virtual void Dump(std::ofstream out) = 0;
 
-  virtual ~Instruction() = default;
+  virtual ~Instruction() {};
 
  private:
   DataType type_;
@@ -268,7 +268,7 @@ class CastInstr final : public Instruction {
   Instruction* op_;
 };
 
-class DeclInstr final : Instruction {
+class DeclInstr final : public Instruction {
  public:
   DeclInstr(size_t id, DataType type)
     : Instruction(type, DECL, id) {

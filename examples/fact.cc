@@ -6,50 +6,39 @@
 int main() {
   Builder build;
   
-  auto fact = build.Func(U64, "factorial", 1);
-  auto n = build.Arg(U64);
-  fact->AddArg(n);
+  auto fact = build.Func(U64, "factorial");
+  auto n = build.Arg(fact, U64);
 
-  auto bb_init = build.BB(fact);
+  auto bb_init = build.Entry(fact);
   auto bb_cond = build.BB(fact);
   auto bb_body = build.BB(fact);
   auto bb_end  = build.BB(fact);
 
+  build.SetBB(bb_init);
   auto f0  = build.Mov(U64, 1);
   auto i0  = build.Mov(U64, 1);
   auto inc = build.Mov(U64, 1);
+  build.Goto(bb_cond);
 
-  bb_init->AddInstr(f0);
-  bb_init->AddInstr(i0);
-  bb_init->AddInstr(inc);
-
-  auto f1 = build.Phi();
-  auto i1 = build.Phi();
+  build.SetBB(bb_cond);
+  auto f1 = build.Phi(U64);
+  auto i1 = build.Phi(U64);
   auto cond = build.Cmp(LE, i1, n);
-  auto jmp0 = build.GotoCond(cond, bb_body, bb_end);
+  build.GotoCond(cond, bb_body, bb_end);
+  
+  build.SetBB(bb_body);
+  auto f2 = build.Mul(f1, i1);
+  auto i2 = build.Add(i1, inc);
+  build.Goto(bb_cond);
+  
+  build.SetBB(bb_end);
+  build.Ret(i1);
 
-  bb_cond->AddInstr(f1);
-  bb_cond->AddInstr(i1);
-  bb_cond->AddInstr(cond);
-  bb_cond->AddInstr(jmp0);
+  build.AddPhiArg(f1, bb_init, f0);
+  build.AddPhiArg(f1, bb_body, f2);
 
-  auto f2 = build.Mul((Instruction*) f1, (Instruction*) i1);
-  auto i2 = build.Add((Instruction*) i1, inc);
-  auto jmp1 = build.Goto(bb_cond);
+  build.AddPhiArg(i1, bb_init, i0);
+  build.AddPhiArg(i1, bb_body, i2);
 
-  bb_body->AddInstr(f2);
-  bb_body->AddInstr(i2);
-  bb_body->AddInstr(jmp1);
-
-  auto ret = build.Ret((Instruction*) i1);
-
-  bb_end->AddInstr(ret);
-
-  f1->AddPhiArg(bb_init, f0);
-  f1->AddPhiArg(bb_body, f2);
-
-  i1->AddPhiArg(bb_init, i0);
-  i1->AddPhiArg(bb_body, i2);
-
-  // build.Dump("graph.gv");
+  return 0;
 }
