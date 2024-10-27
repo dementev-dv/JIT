@@ -1,0 +1,24 @@
+factorial:
+	param u64 _1
+
+<bb_0>
+	u64 _0 = 1
+	u64 _1 = 1
+	u64 _2 = 1
+	goto [bb_1]
+
+<bb_1>
+	u64 _4 = phi <bb_0: _0, bb_2: _8
+	u64 _5 = phi <bb_0: _1, bb_2: _9
+	bool _6 = _5 <= _1
+	if _6 goto [bb_2] else goto [bb_3]
+
+<bb_2>
+	u64 _8 = _4 * _5
+	u64 _9 = _5 + _2
+	goto [bb_1]
+
+<bb_3>
+	ret _5
+
+

@@ -1,7 +1,8 @@
-#include <types.hpp>
+#include <type.hpp>
 #include <instr.hpp>
 #include <func.hpp>
 #include <builder.hpp>
+#include <cfg.hpp>
 
 int main() {
   Builder build;
@@ -9,10 +10,11 @@ int main() {
   auto fact = build.Func(U64, "factorial");
   auto n = build.Arg(fact, U64);
 
-  auto bb_init = build.Entry(fact);
-  auto bb_cond = build.BB(fact);
-  auto bb_body = build.BB(fact);
-  auto bb_end  = build.BB(fact);
+  build.SetFunc(fact);
+  auto bb_init = build.Entry();
+  auto bb_cond = build.BB();
+  auto bb_body = build.BB();
+  auto bb_end  = build.BB();
 
   build.SetBB(bb_init);
   auto f0  = build.Mov(U64, 1);
@@ -39,6 +41,10 @@ int main() {
 
   build.AddPhiArg(i1, bb_init, i0);
   build.AddPhiArg(i1, bb_body, i2);
+
+  ControlFlow* cfg = build.CFG();
+  cfg->DumpGraph("graph.gv");
+  cfg->DumpIR("fact.txt");
 
   return 0;
 }

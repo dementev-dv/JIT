@@ -1,7 +1,7 @@
 #ifndef INSTR_HPP_
 #define INSTR_HPP_
 
-#include <types.hpp>
+#include <type.hpp>
 #include <bb.hpp>
 #include <func.hpp>
 
@@ -36,9 +36,9 @@ class Instruction {
 
   size_t id() { return id_; }
 
-  virtual void Dump(std::ofstream out) = 0;
+  virtual void Dump(std::ofstream& out) = 0;
 
-  virtual ~Instruction() {};
+  virtual ~Instruction() { };
 
  private:
   DataType type_;
@@ -63,18 +63,7 @@ class ArithmeticInstr final : public Instruction {
       op1_(op1),
       op2_(op2) { }
 
-  void Dump(std::ofstream out) {
-    out << str(type());
-    out << op1_->id();
-    switch(ari_) {
-      case ADD: out << " + "; break;
-      case SUB: out << " - "; break;
-      case MUL: out << " * "; break;
-      case DIV: out << " / "; break;
-    }
-    out << op2_->id();
-    out << std::endl;
-  }
+  void Dump(std::ofstream& out);
 
  private:
   AriCode ari_;
@@ -100,21 +89,7 @@ class CompareInstr final : public Instruction {
       op1_(op1),
       op2_(op2) { }
 
-  void Dump(std::ofstream out) {
-    out << str(type());
-    out << " _" << id() << " = ";
-    out << op1_->id();
-    switch(cmp_) {
-      case EQ: out << " == "; break;
-      case NE: out << " != "; break;
-      case LT: out << " < "; break;
-      case LE: out << " <= "; break;
-      case GT: out << " > "; break;
-      case GE: out << " >= "; break;
-    }
-    out << op2_->id();
-    out << std::endl;
-  }
+  void Dump(std::ofstream& out);
 
  private:
   CmpCode cmp_;
@@ -136,9 +111,7 @@ class GotoInstr final : public Instruction {
 
   void SetDst(BasicBlock* dst) { dst_ = dst; }
 
-  void Dump(std::ofstream out) {
-    out << "goto [bb_" << dst_->id() << "]" << std::endl;
-  }
+  void Dump(std::ofstream& out);
 
  private:
   BasicBlock* dst_;
@@ -162,11 +135,7 @@ class GotoCondInstr final : public Instruction {
   void SetDst1(BasicBlock* dst) { dst1_ = dst; }
   void SetDst2(BasicBlock* dst) { dst2_ = dst; }
 
-  void Dump(std::ofstream out) {
-    out << "if _" << cond_->id();
-    out << "goto [bb_" << dst1_->id() << "]";
-    out << " else goto [bb_" << dst2_->id() << "]" << std::endl;
-  }
+  void Dump(std::ofstream& out);
 
  private:
   BasicBlock* dst1_;
@@ -180,8 +149,8 @@ class ReturnInstr final : public Instruction {
     : Instruction(type, RET, id),
       op_(op) { }
 
-  void Dump(std::ofstream out) {
-    out << "ret _" << op_->id() << std::endl;
+  void Dump(std::ofstream& out) {
+    out << "ret _" << op_->id();
   }
 
  private:
@@ -197,14 +166,7 @@ class CallInstr final : public Instruction {
 
   void AddArg(Instruction* i) { args_.push_back(i); }
 
-  void Dump(std::ofstream out) {
-    out << callee_->name() << "(";
-    for (size_t i = 0; i < args_.size(); i ++) {
-      out << "_" << args_[i]->id();
-      if (i != args_.size() - 1) out << ", ";
-    }
-    out << ")" << std::endl;
-  }
+  void Dump(std::ofstream& out);
 
  private:
   Function* callee_;
@@ -224,15 +186,7 @@ class PhiInstr final : public Instruction {
     args_.push_back(arg);
   }
 
-  void Dump(std::ofstream out) {
-    out << str(type()) << " _" << id() << " = phi <";
-    for (size_t i = 0; i < args_.size(); i++) {
-      out << "bb_" << args_[i].first->id() << ": _" << args_[i].second->id();
-      if (i != args_.size() - 1)
-        out << ", ";
-    }
-    out << std::endl;
-  }
+  void Dump(std::ofstream& out);
 
  private:
   std::vector<PhiArg> args_;
@@ -245,9 +199,7 @@ class MovInstr final : public Instruction {
       data_(data) {
   }
 
-  void Dump(std::ofstream out) {
-    out << str(type()) << " _" << id() << " = " << data_ << std::endl;
-  }
+  void Dump(std::ofstream& out);
 
  private:
   int64_t data_;
@@ -259,10 +211,7 @@ class CastInstr final : public Instruction {
     : Instruction(type, CAST, id),
       op_(op) { }
 
-  void Dump(std::ofstream out) {
-    out << str(type()) << " _" << id() << " = ";
-    out << str(type()) << " _" << op_->id();
-  }
+  void Dump(std::ofstream& out);
 
  private:
   Instruction* op_;
@@ -274,9 +223,7 @@ class DeclInstr final : public Instruction {
     : Instruction(type, DECL, id) {
   }
 
-  void Dump(std::ofstream out) {
-    out << "param " << str(type()) << " _" << id() << std::endl;
-  }
+  void Dump(std::ofstream& out);
 };
 
 #endif // INSTR_HPP_

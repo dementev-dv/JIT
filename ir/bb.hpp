@@ -1,10 +1,10 @@
 #ifndef BB_HPP_
 #define BB_HPP_
 
-#include <types.hpp>
+#include <type.hpp>
 
 #include <list>
-#include <iterator>
+#include <fstream>
 
 class Function;
 
@@ -40,6 +40,8 @@ class BasicBlock {
 
   Function* func() { return f_; }
 
+  void Dump(std::ofstream& out);
+
  private:
   size_t id_;
   Function* f_;
@@ -48,8 +50,8 @@ class BasicBlock {
   std::list<PhiInstr*> phi_;
 
   std::vector<BasicBlock*> prec_;
-  BasicBlock* trueSucc_;
-  BasicBlock* falseSucc_;
+  BasicBlock* trueSucc_{nullptr};
+  BasicBlock* falseSucc_{nullptr};
 };
 
 #endif // BB_HPP_

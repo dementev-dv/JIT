@@ -4,8 +4,9 @@
 #include <vector>
 #include <string>
 
-#include <types.hpp>
+#include <type.hpp>
 #include <bb.hpp>
+#include <cfg.hpp>
 
 class DeclInstr;
 
@@ -15,9 +16,9 @@ class Function final {
     : name_(name),
       type_(type),
       args_(0),
-      entry_(nullptr) { }
+      cfg_(nullptr) { }
 
-  void SetEntry(BasicBlock* bb) { entry_ = bb; }
+  void SetCFG(ControlFlow* cfg) { cfg_ = cfg; }
 
   size_t argn() { return args_.size(); }
 
@@ -31,13 +32,15 @@ class Function final {
 
   DataType type() { return type_; }
 
+  ControlFlow* cfg() { return cfg_; }
+
  private:
   std::string name_;
   DataType type_;
 
   std::vector<DeclInstr*> args_;
 
-  BasicBlock* entry_;
+  ControlFlow* cfg_;
 };
 
 #endif // FUNC_HPP_
