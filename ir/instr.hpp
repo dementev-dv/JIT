@@ -38,7 +38,7 @@ class Instruction {
 
   virtual void Dump(std::ofstream& out) = 0;
 
-  virtual ~Instruction() { };
+  virtual ~Instruction() = default;
 
  private:
   DataType type_;

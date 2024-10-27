@@ -4,6 +4,7 @@
 #include <type.hpp>
 
 #include <list>
+#include <iterator>
 #include <fstream>
 
 class Function;
@@ -17,6 +18,15 @@ class BasicBlock {
   BasicBlock(size_t id, Function* f) 
     : id_(id),
       f_(f) { }
+
+  ~BasicBlock() {
+    for (std::list<Instruction*>::iterator ins = instr_.begin(); ins != instr_.end(); ins++) {
+      delete *ins;
+    }
+    for (std::list<PhiInstr*>::iterator phi = phi_.begin(); phi != phi_.end(); phi++) {
+      delete *phi;
+    }
+  }
 
   size_t id() { return id_; }
 

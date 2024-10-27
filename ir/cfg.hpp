@@ -13,7 +13,12 @@ class Function;
 class ControlFlow final {
  public:
   ControlFlow(Function* f) : func_(f) { }
-  ~ControlFlow() = default;
+  ~ControlFlow() {
+    delete entry_;
+    for (size_t i = 0; i < bb_.size(); i++) {
+      delete bb_[i];
+    }
+  }
 
   void AddBB(BasicBlock* bb) { bb_.push_back(bb); }
 

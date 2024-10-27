@@ -18,6 +18,13 @@ class Function final {
       args_(0),
       cfg_(nullptr) { }
 
+  ~Function() {
+    for (size_t i = 0; i < args_.size(); i++) {
+      delete args_[i];
+    }
+    delete cfg_;
+  }
+
   void SetCFG(ControlFlow* cfg) { cfg_ = cfg; }
 
   size_t argn() { return args_.size(); }
