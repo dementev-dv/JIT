@@ -10,6 +10,8 @@
 
 class Function;
 
+class Loop;
+
 class ControlFlow final {
  public:
   ControlFlow(Function* f) : func_(f) { }
@@ -32,11 +34,17 @@ class ControlFlow final {
 
   void SetDomSlow();
   void SetDom();
+  void SetIdom();
+  void FindLoop();
 
   void DumpIR(const char* path);
   void DumpGraph(const char* path);
   void DumpDomTree(const char* path);
   void DumpIdomTree(const char* path);
+
+ private:
+  void travel(BasicBlock* bb, std::vector<BasicBlock*>& vec);
+  void find_idom(BasicBlock* bb);
 
   std::vector<BasicBlock*> DFS() {
     std::vector<BasicBlock*> vec;
@@ -73,11 +81,9 @@ class ControlFlow final {
     return vec;
   }
 
- private:
-  void travel(BasicBlock* bb, std::vector<BasicBlock*>& vec);
-
   BasicBlock* entry_{nullptr};
   std::vector<BasicBlock*> bb_;
+  std::vector<Loop*> loop_;
   size_t bbid_{0};
   size_t insid_{0};
   Function* func_;

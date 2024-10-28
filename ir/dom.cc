@@ -1,7 +1,6 @@
 #include <dom.hpp>
 #include <cfg.hpp>
 
-using SetIt = typename std::unordered_set<BasicBlock*>::iterator;
 
 Set Intersect(Set& s1, Set& s2) {
   Set inter;
@@ -108,4 +107,36 @@ void ControlFlow::SetDom() {
       (*it)->AddSub(bb_[i]);
     }
   }
+}
+
+void ControlFlow::SetIdom() {
+  find_idom(entry_->GetTrueSucc());
+  find_idom(entry_->GetFalseSucc());
+}
+
+void ControlFlow::find_idom(BasicBlock* bb) {
+  if (!bb) return;
+  Set cand = Reachable(entry_);
+
+  if (bb->nprecs() == 1) {
+    bb->SetIdom(bb->GetPrec(0));
+  } else {
+    for (size_t i = 0; i < bb->nprecs(); i++) {
+      Set& dom = bb->GetPrec(i)->Dom();
+      cand = Intersect(cand, bb->GetPrec(i)->Dom());
+    }
+    ASSERT(!cand.empty());
+    size_t n = 0;
+    BasicBlock* closest;
+    for (SetIt it = cand.begin(); it != cand.end(); it++) {
+      if ((*it)->Dom().size() > n) {
+        n = (*it)->Dom().size();
+        closest = *it;
+      }
+    }
+    bb->SetIdom(closest);
+  }
+
+  find_idom(bb->GetTrueSucc());
+  find_idom(bb->GetFalseSucc());
 }

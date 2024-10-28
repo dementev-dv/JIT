@@ -135,13 +135,15 @@ void ControlFlow::DumpDomTree(const char* path) {
   std::ofstream out(path);
   out << "digraph DomTree_" << func_->name() << " {\n";
   out << "\tpeek" << entry_ << "[label = \"" << entry_->id() << "\"]\n";
-  for (size_t j = 0; j < entry_->nsubs(); j++) {
-    out << "\t\tpeek" << entry_ << " -> peek" << entry_->GetSub(j) << "\n";
+  Set& sub = entry_->Sub();
+  for (SetIt it = sub.begin(); it != sub.end(); it++) {
+    out << "\t\tpeek" << entry_ << " -> peek" << *it << "\n";
   }
   for (size_t i = 0; i < bb_.size(); i++) {
+    sub = bb_[i]->Sub();
     out << "\tpeek" << bb_[i] << "[label = \"" << bb_[i]->id() << "\"]\n";
-    for (size_t j = 0; j < bb_[i]->nsubs(); j++) {
-      out << "\t\tpeek" << bb_[i] << " -> peek" << bb_[i]->GetSub(j) << "\n";
+    for (SetIt it = sub.begin(); it != sub.end(); it++) {
+      out << "\t\tpeek" << bb_[i] << " -> peek" << *it << "\n";
     }
   }
   out << "}\n";
@@ -151,14 +153,13 @@ void ControlFlow::DumpIdomTree(const char* path) {
   std::ofstream out(path);
   out << "digraph IdomTree_" << func_->name() << " {\n";
   out << "\tpeek" << entry_ << "[label = " << entry_->id() << "]\n";
-  if (entry_->GetIdom())
-    out << "\t\tpeek" << entry_ << " -> peek" << entry_->GetIdom() << "\n";
 
   for (size_t i = 0; i < bb_.size(); i++) {
     out << "\tpeek" << bb_[i] << "[label = " << bb_[i]->id() << "]\n";
-    if (entry_->GetIdom())
-      out << "\t\tpeek" << bb_[i] << " -> peek" << bb_[i]->GetIdom() << "\n";
+    if (bb_[i]->GetIdom())
+      out << "\t\tpeek" << bb_[i]->GetIdom() << " -> peek" << bb_[i] << "\n";
   }
+  out << "}\n";
 }
 
 void BasicBlock::Dump(std::ofstream& out) {

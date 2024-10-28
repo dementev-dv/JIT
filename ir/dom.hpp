@@ -5,8 +5,6 @@
 
 #include <unordered_set>
 
-using Set = typename std::unordered_set<BasicBlock*>;
-
 Set Intersect(Set& s1, Set& s2);
 Set Substract(Set& s1, Set& s2);
 Set Reachable(BasicBlock* bb);

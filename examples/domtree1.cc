@@ -37,10 +37,13 @@ int main() {
   g->AddPrec(f);
 
   ControlFlow* cfg = test->cfg();
+  cfg->SetDom();
+  cfg->SetIdom();
   cfg->DumpGraph("test.gv");
   // cfg->SetDom();
-  cfg->SetDomSlow();
+  cfg->SetDom();
   cfg->DumpDomTree("testdom.gv");
+  cfg->DumpIdomTree("testidom.gv");
 
   return 0;
 }

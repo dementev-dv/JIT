@@ -6,12 +6,20 @@
 #include <list>
 #include <iterator>
 #include <fstream>
+#include <unordered_set>
 
 class Function;
 
 class Instruction;
 
 class PhiInstr;
+
+class BasicBlock;
+
+class Loop;
+
+using Set = typename std::unordered_set<BasicBlock*>;
+using SetIt = typename std::unordered_set<BasicBlock*>::iterator;
 
 class BasicBlock {
  public:
@@ -40,9 +48,9 @@ class BasicBlock {
 
   void AddPrec(BasicBlock* bb) { prec_.push_back(bb); }
 
-  void AddDom(BasicBlock* bb) { dom_.push_back(bb); }
+  void AddDom(BasicBlock* bb) { if (!dom_.contains(bb)) dom_.insert(bb); }
 
-  void AddSub(BasicBlock* bb) { sub_.push_back(bb); }
+  void AddSub(BasicBlock* bb) { if (!sub_.contains(bb)) sub_.insert(bb); }
 
   void SetIdom(BasicBlock* bb) { idom_ = bb; }
 
@@ -54,15 +62,11 @@ class BasicBlock {
 
   BasicBlock* GetIdom() { return idom_; }
 
-  BasicBlock* GetDom(size_t n) { return dom_[n]; }
-
-  BasicBlock* GetSub(size_t n) { return sub_[n]; }
-
   size_t nprecs() { return prec_.size(); }
 
-  size_t nsubs() { return sub_.size(); }
+  // size_t nsubs() { return sub_.size(); }
 
-  size_t ndoms() { return dom_.size(); }
+  // size_t ndoms() { return dom_.size(); }
 
   Function* func() { return f_; }
 
@@ -71,6 +75,14 @@ class BasicBlock {
   void SetMarker(bool m) { marker_ = m; }
 
   bool marker() { return marker_; }
+
+  bool Dominate(BasicBlock* bb) { return dom_.contains(bb); }
+
+  bool Subordinate(BasicBlock* bb) { return sub_.contains(bb); }
+
+  Set& Dom() { return dom_; }
+
+  Set& Sub() { return sub_; }
 
  private:
   size_t id_;
@@ -83,11 +95,15 @@ class BasicBlock {
   BasicBlock* trueSucc_{nullptr};
   BasicBlock* falseSucc_{nullptr};
 
-  std::vector<BasicBlock*> dom_;
-  std::vector<BasicBlock*> sub_;
+  bool marker_{false};
+  Set dom_;
+  Set sub_;
   BasicBlock* idom_{nullptr};
 
-  bool marker_{false};
+  Loop* loop_{nullptr};
+  bool black_{false};
+  bool grey_{false};
+  bool green_{false};
 };
 
 #endif // BB_HPP_
