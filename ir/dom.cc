@@ -1,7 +1,5 @@
 #include <dom.hpp>
 #include <cfg.hpp>
-#include <iostream>
-
 
 using SetIt = typename std::unordered_set<BasicBlock*>::iterator;
 
@@ -50,23 +48,21 @@ Set Reachable(BasicBlock* bb) {
   return res;
 }
 
-void DFS::travel(BasicBlock* bb) {
+void ControlFlow::travel(BasicBlock* bb, std::vector<BasicBlock*>& vec) {
   ASSERT(bb);
   if (bb->marker())
     return;
   bb->SetMarker(true);
-  vec_.push_back(bb);
+  vec.push_back(bb);
   BasicBlock* succ0 = bb->GetTrueSucc();
   BasicBlock* succ1 = bb->GetFalseSucc();
 
-  if (succ0) travel(succ0);
-  if (succ1) travel(succ1);
-  bb->SetMarker(false);
+  if (succ0) travel(succ0, vec);
+  if (succ1) travel(succ1, vec);
 }
 
 void ControlFlow::SetDomSlow() {
-  DFS dfs(entry_);
-  std::vector<BasicBlock*> all = dfs.Run();
+  std::vector<BasicBlock*> all = DFS();
   Set r = Reachable(entry_);
 
   for (size_t i = 0; i < all.size(); i++) {
@@ -109,7 +105,6 @@ void ControlFlow::SetDom() {
   for (size_t i = 0; i < bb_.size(); i++) {
     for (SetIt it = dom[bb_[i]].begin(); it != dom[bb_[i]].end(); it++) {
       bb_[i]->AddDom(*it);
-      // std::cout << (*it)->id() << " dominates " << bb_[i]->id() << std::endl;
       (*it)->AddSub(bb_[i]);
     }
   }

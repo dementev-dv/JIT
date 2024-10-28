@@ -38,44 +38,27 @@ class ControlFlow final {
   void DumpDomTree(const char* path);
   void DumpIdomTree(const char* path);
 
- private:
-  BasicBlock* entry_{nullptr};
-  std::vector<BasicBlock*> bb_;
-  size_t bbid_{0};
-  size_t insid_{0};
-  Function* func_;
-};
-
-class DFS final {
- public:
-  DFS(BasicBlock* bb) : entry_(bb) { }
-
-  std::vector<BasicBlock*> Run() {
-    travel(entry_);
-    return vec_;
+  std::vector<BasicBlock*> DFS() {
+    std::vector<BasicBlock*> vec;
+    travel(entry_, vec);
+    entry_->SetMarker(false);
+    for (size_t i = 0; i < bb_.size(); i++) {
+      bb_[i]->SetMarker(false);
+    }
+    return vec;
   }
 
- private:
-  void travel(BasicBlock* bb);
-
-  BasicBlock* entry_;
-  std::vector<BasicBlock*> vec_;
-};
-
-class BFS final {
- public:
-  BFS(BasicBlock* bb) : entry_(bb) { }
-
-  std::vector<BasicBlock*> Run() {
+  std::vector<BasicBlock*> BFS() {
     std::queue<BasicBlock*> q;
     q.push(entry_);
+    std::vector<BasicBlock*> vec;
     while (!q.empty()) {
       BasicBlock* curr = q.front();
       q.pop();
       if (curr->marker())
         continue;
       curr->SetMarker(true);
-      vec_.push_back(curr);
+      vec.push_back(curr);
       BasicBlock* succ0 = curr->GetTrueSucc();
       BasicBlock* succ1 = curr->GetFalseSucc();
 
@@ -83,18 +66,21 @@ class BFS final {
       if (succ1 && !succ1->marker()) q.push(succ1);
     }
 
-    for (size_t i = 0; i < vec_.size(); i++) {
-      vec_[i]->SetMarker(false);
+    for (size_t i = 0; i < vec.size(); i++) {
+      vec[i]->SetMarker(false);
     }
 
-    return vec_;
+    return vec;
   }
 
  private:
-  void travel(BasicBlock* bb);
+  void travel(BasicBlock* bb, std::vector<BasicBlock*>& vec);
 
-  BasicBlock* entry_;
-  std::vector<BasicBlock*> vec_;
+  BasicBlock* entry_{nullptr};
+  std::vector<BasicBlock*> bb_;
+  size_t bbid_{0};
+  size_t insid_{0};
+  Function* func_;
 };
 
 #endif // CFG_HPP_
