@@ -40,17 +40,37 @@ class BasicBlock {
 
   void AddPrec(BasicBlock* bb) { prec_.push_back(bb); }
 
+  void AddDom(BasicBlock* bb) { dom_.push_back(bb); }
+
+  void AddSub(BasicBlock* bb) { sub_.push_back(bb); }
+
+  void SetIdom(BasicBlock* bb) { idom_ = bb; }
+
   BasicBlock* GetTrueSucc() { return trueSucc_; }
 
   BasicBlock* GetFalseSucc() { return falseSucc_; }
 
   BasicBlock* GetPrec(size_t n) { return prec_[n]; }
 
+  BasicBlock* GetIdom() { return idom_; }
+
+  BasicBlock* GetDom(size_t n) { return dom_[n]; }
+
+  BasicBlock* GetSub(size_t n) { return sub_[n]; }
+
   size_t nprecs() { return prec_.size(); }
+
+  size_t nsubs() { return sub_.size(); }
+
+  size_t ndoms() { return dom_.size(); }
 
   Function* func() { return f_; }
 
   void Dump(std::ofstream& out);
+
+  void SetMarker(bool m) { marker_ = m; }
+
+  bool marker() { return marker_; }
 
  private:
   size_t id_;
@@ -62,6 +82,12 @@ class BasicBlock {
   std::vector<BasicBlock*> prec_;
   BasicBlock* trueSucc_{nullptr};
   BasicBlock* falseSucc_{nullptr};
+
+  std::vector<BasicBlock*> dom_;
+  std::vector<BasicBlock*> sub_;
+  BasicBlock* idom_{nullptr};
+
+  bool marker_{false};
 };
 
 #endif // BB_HPP_

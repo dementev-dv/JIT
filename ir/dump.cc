@@ -1,6 +1,7 @@
 #include <type.hpp>
 #include <bb.hpp>
 #include <func.hpp>
+#include <instr.hpp>
 #include <cfg.hpp>
 
 #include <iterator>
@@ -21,25 +22,6 @@ const char* str(DataType type) {
     default:    return "UNKNOWN";
   }
   return "UNKNOWN";
-}
-
-void BasicBlock::Dump(std::ofstream& out) {
-  // std::cout << "bb" << id_ << std::endl;
-  // std::cout << phi_.size() << " phis" << std::endl;
-  // std::cout << instr_.size() << " instr" << std::endl;
-  out << "<bb_" << id_ << ">\n";
-
-  for (std::list<PhiInstr*>::iterator phi = phi_.begin(); phi != phi_.end(); phi++) {
-    out << "\t";
-    (*phi)->Dump(out);
-    out << "\n";
-  }
-
-  for (std::list<Instruction*>::iterator ins = instr_.begin(); ins != instr_.end(); ins++) {
-    out << "\t";
-    (*ins)->Dump(out);
-    out << "\n";
-  }
 }
 
 void ArithmeticInstr::Dump(std::ofstream& out) {
@@ -147,4 +129,53 @@ void ControlFlow::DumpGraph(const char* path) {
       out << "\t\tpeek" << bb_[i] << " -> peek" << bb_[i]->GetFalseSucc() << "\n";
   }
   out << "}\n";
+}
+
+void ControlFlow::DumpDomTree(const char* path) {
+  std::ofstream out(path);
+  out << "digraph DomTree_" << func_->name() << " {\n";
+  out << "\tpeek" << entry_ << "[label = \"" << entry_->id() << "\"]\n";
+  for (size_t j = 0; j < entry_->nsubs(); j++) {
+    out << "\t\tpeek" << entry_ << " -> peek" << entry_->GetSub(j) << "\n";
+  }
+  for (size_t i = 0; i < bb_.size(); i++) {
+    out << "\tpeek" << bb_[i] << "[label = \"" << bb_[i]->id() << "\"]\n";
+    for (size_t j = 0; j < bb_[i]->nsubs(); j++) {
+      out << "\t\tpeek" << bb_[i] << " -> peek" << bb_[i]->GetSub(j) << "\n";
+    }
+  }
+  out << "}\n";
+}
+
+void ControlFlow::DumpIdomTree(const char* path) {
+  std::ofstream out(path);
+  out << "digraph IdomTree_" << func_->name() << " {\n";
+  out << "\tpeek" << entry_ << "[label = " << entry_->id() << "]\n";
+  if (entry_->GetIdom())
+    out << "\t\tpeek" << entry_ << " -> peek" << entry_->GetIdom() << "\n";
+
+  for (size_t i = 0; i < bb_.size(); i++) {
+    out << "\tpeek" << bb_[i] << "[label = " << bb_[i]->id() << "]\n";
+    if (entry_->GetIdom())
+      out << "\t\tpeek" << bb_[i] << " -> peek" << bb_[i]->GetIdom() << "\n";
+  }
+}
+
+void BasicBlock::Dump(std::ofstream& out) {
+  // std::cout << "bb" << id_ << std::endl;
+  // std::cout << phi_.size() << " phis" << std::endl;
+  // std::cout << instr_.size() << " instr" << std::endl;
+  out << "<bb_" << id_ << ">\n";
+
+  for (std::list<PhiInstr*>::iterator phi = phi_.begin(); phi != phi_.end(); phi++) {
+    out << "\t";
+    (*phi)->Dump(out);
+    out << "\n";
+  }
+
+  for (std::list<Instruction*>::iterator ins = instr_.begin(); ins != instr_.end(); ins++) {
+    out << "\t";
+    (*ins)->Dump(out);
+    out << "\n";
+  }
 }

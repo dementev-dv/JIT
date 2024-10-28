@@ -42,8 +42,8 @@ int main() {
   build.AddPhiArg(i1, bb_init, i0);
   build.AddPhiArg(i1, bb_body, i2);
 
-  ControlFlow* cfg = build.CFG();
-  cfg->DumpGraph("graph.gv");
+  ControlFlow* cfg = fact->cfg();
+  cfg->DumpGraph("fact.gv");
   cfg->DumpIR("fact.txt");
 
   return 0;
