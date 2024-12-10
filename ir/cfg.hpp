@@ -35,6 +35,7 @@ class ControlFlow final {
   void SetDom();
   void SetIdom();
   void FindLoop();
+  void AddLoop(Loop* l) { loop_.push_back(l); }
 
   void DumpIR(const char* path);
   void DumpGraph(const char* path);

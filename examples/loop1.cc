@@ -86,12 +86,9 @@ int main() {
   ControlFlow* cfg = test->cfg();
   cfg->DumpGraph("loop.gv");
   cfg->SetDom();
-  cfg->DumpDomTree("testloop.gv");
-  cfg->SetIdom();
   cfg->DumpIdomTree("testiloop.gv");
-
-
   cfg->FindLoop();
+  cfg->DumpLoopTree("loops.gv");
 
   return 0;
 }

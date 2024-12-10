@@ -3,6 +3,7 @@
 #include <func.hpp>
 #include <instr.hpp>
 #include <cfg.hpp>
+#include <loop.hpp>
 
 #include <iterator>
 // #include <iostream>
@@ -179,4 +180,15 @@ void BasicBlock::Dump(std::ofstream& out) {
     (*ins)->Dump(out);
     out << "\n";
   }
+}
+
+void ControlFlow::DumpLoopTree(const char *path) {
+  std::ofstream out(path);
+  out << "digraph LoopTree_" << func_->name() << " {\n";
+  for (size_t i = 0; i < loop_.size(); i ++) {
+    out << "\tpeek" << loop_[i] << "[label = \"" << loop_[i]->id() << "\"]\n";
+    if (loop_[i]->Outer())
+      out << "\t\tpeek" << loop_[i]->Outer() << " -> peek" << loop_[i] << "\n";
+  }
+  out << "}\n";
 }

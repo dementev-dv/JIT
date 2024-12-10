@@ -14,13 +14,19 @@ class Loop final {
 
   void AddExit(BasicBlock* bb) { if (!exit_.contains(bb)) exit_.insert(bb); }
 
-  void AddBlock(BasicBlock* bb) { block_.push_back(bb); }
+  void AddBlock(BasicBlock* bb) { if (!block_.contains(bb)) block_.insert(bb); }
 
   BasicBlock* Header() { return header_; }
+
+  Loop* Outer() { return outer_; }
+
+  void SetOuter(Loop* o) { outer_ = o; }
 
   bool IsLatch(BasicBlock* bb) { return latch_.contains(bb); }
 
   bool IsExit(BasicBlock* bb) { return exit_.contains(bb); }
+
+  bool HasBlock(BasicBlock* bb) { return block_.contains(bb); }
 
   bool Reducible() { return reducible_; }
 
@@ -28,21 +34,21 @@ class Loop final {
 
   void MarkIrreducible() {
     reducible_ = false;
-    if (header_) block_.push_back(header_);    
+    if (header_) block_.insert(header_);    
     header_ = nullptr;
   }
   
   void build();
 
  private:
+  BasicBlock* header_;
   size_t id_;
 
-  BasicBlock* header_;
   Set latch_;
   Set exit_;
-  std::vector<BasicBlock*> block_;
+  Set block_;
 
-  Loop* outer_;
+  Loop* outer_{nullptr};
   std::vector<Loop*> inner_;
 
   bool reducible_{true};

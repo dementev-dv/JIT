@@ -73,30 +73,8 @@ void ControlFlow::find_idom(BasicBlock* bb) {
   if (!bb) return;
   if (bb->GetIdom() != nullptr) return;
 
-  // if (bb->nprecs() == 1) {
-  //   bb->SetIdom(bb->GetPrec(0));
-  // } else {
-  //   for (size_t i = 0; i < bb->nprecs(); i++) {
-  //     Set& dom = bb->GetPrec(i)->Dom();
-  //     cand = Intersect(cand, dom);
-  //   }
-  //   if (cand.empty()) { std::cout << bb->id() << "\n"; }
-  //   ASSERT(!cand.empty());
-  //   size_t n = 0;
-  //   BasicBlock* closest;
-  //   for (SetIt it = cand.begin(); it != cand.end(); it++) {
-  //     if ((*it)->Dom().size() > n) {
-  //       n = (*it)->Dom().size();
-  //       closest = *it;
-  //     }
-  //   }
-  //   bb->SetIdom(closest);
-  // }
-
-
-
   if (bb->Dom().size() == 1) {
-    std::cout << "idom(" << bb->id() << ") = " << *(bb->Dom().begin());
+    // std::cout << "idom(" << bb->id() << ") = " << *(bb->Dom().begin());
     bb->SetIdom(*(bb->Dom().begin()));
   } else {
     Set cand = bb->Dom();
@@ -105,7 +83,7 @@ void ControlFlow::find_idom(BasicBlock* bb) {
     for (SetIt it = cand.begin(); it != cand.end(); it++) {
       if (*it == bb)
         continue;
-      std::cout << "cand(" << bb->id() << ") = " << (*it)->id() << std::endl;
+      // std::cout << "cand(" << bb->id() << ") = " << (*it)->id() << std::endl;
       if ((*it)->Dom().size() >= n) {
         n = (*it)->Dom().size();
         closest = *it;
