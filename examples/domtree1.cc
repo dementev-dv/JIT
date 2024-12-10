@@ -45,5 +45,7 @@ int main() {
   cfg->DumpDomTree("testdom.gv");
   cfg->DumpIdomTree("testidom.gv");
 
+  cfg->FindLoop();
+
   return 0;
 }

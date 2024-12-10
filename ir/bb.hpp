@@ -2,6 +2,7 @@
 #define BB_HPP_
 
 #include <type.hpp>
+#include <set.hpp>
 
 #include <list>
 #include <iterator>
@@ -14,12 +15,7 @@ class Instruction;
 
 class PhiInstr;
 
-class BasicBlock;
-
 class Loop;
-
-using Set = typename std::unordered_set<BasicBlock*>;
-using SetIt = typename std::unordered_set<BasicBlock*>::iterator;
 
 class BasicBlock {
  public:
@@ -39,28 +35,22 @@ class BasicBlock {
   size_t id() { return id_; }
 
   void AddInstr(Instruction* i) { instr_.push_back(i); }
-
   void AddPhi(PhiInstr* i) { phi_.push_back(i); }
 
   void SetTrueSucc(BasicBlock* bb) { trueSucc_ = bb; }
-
   void SetFalseSucc(BasicBlock* bb) { falseSucc_ = bb; }
 
   void AddPrec(BasicBlock* bb) { prec_.push_back(bb); }
-
-  void AddDom(BasicBlock* bb) { if (!dom_.contains(bb)) dom_.insert(bb); }
-
-  void AddSub(BasicBlock* bb) { if (!sub_.contains(bb)) sub_.insert(bb); }
-
+  void AddDom(BasicBlock* bb);
+  void AddSub(BasicBlock* bb);
   void SetIdom(BasicBlock* bb) { idom_ = bb; }
+  void SetLoop(Loop* loop) { loop_ = loop; }
 
   BasicBlock* GetTrueSucc() { return trueSucc_; }
-
   BasicBlock* GetFalseSucc() { return falseSucc_; }
-
   BasicBlock* GetPrec(size_t n) { return prec_[n]; }
-
   BasicBlock* GetIdom() { return idom_; }
+  Loop* GetLoop() { return loop_; }
 
   size_t nprecs() { return prec_.size(); }
 
@@ -73,16 +63,19 @@ class BasicBlock {
   void Dump(std::ofstream& out);
 
   void SetMarker(bool m) { marker_ = m; }
-
   bool marker() { return marker_; }
 
-  bool Dominate(BasicBlock* bb) { return dom_.contains(bb); }
-
-  bool Subordinate(BasicBlock* bb) { return sub_.contains(bb); }
+  bool Dominate(BasicBlock* bb);
+  bool Subordinate(BasicBlock* bb);
 
   Set& Dom() { return dom_; }
-
   Set& Sub() { return sub_; }
+
+  void mark_gray(bool m) { gray_ = m; }
+  void mark_black(bool m) { black_ = m; }
+
+  bool gray() { return gray_; }
+  bool black() { return black_; }
 
  private:
   size_t id_;
@@ -102,8 +95,7 @@ class BasicBlock {
 
   Loop* loop_{nullptr};
   bool black_{false};
-  bool grey_{false};
-  bool green_{false};
+  bool gray_{false};
 };
 
 #endif // BB_HPP_

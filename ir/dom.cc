@@ -1,51 +1,6 @@
 #include <dom.hpp>
-#include <cfg.hpp>
-
-
-Set Intersect(Set& s1, Set& s2) {
-  Set inter;
-  for (SetIt it = s1.begin(); it != s1.end(); it++) {
-    if (s2.contains(*it))
-      inter.insert(*it);
-  }
-  return inter;
-}
-
-Set Substract(Set& s1, Set& s2) {
-  Set sub;
-  for (SetIt it = s1.begin(); it != s1.end(); it++) {
-    if (!s2.contains(*it))
-      sub.insert(*it);
-  }
-  return sub;
-}
-
-bool Differ(Set& s1, Set& s2) {
-  for (SetIt it = s1.begin(); it != s1.end(); it++) {
-    if (!s2.contains(*it))
-      return true;
-  }
-  for (SetIt it = s2.begin(); it != s2.end(); it++) {
-    if (!s1.contains(*it))
-      return true;
-  }
-  return false;
-}
-
-Set Reachable(BasicBlock* bb) {
-  Set res(0);
-  if (bb->marker()) return res;
-
-  res.insert(bb);
-  bb->SetMarker(true);
-  BasicBlock* succ0 = bb->GetTrueSucc();
-  BasicBlock* succ1 = bb->GetFalseSucc();
-
-  if (succ0) res.merge(Reachable(succ0));
-  if (succ1) res.merge(Reachable(succ1));
-  bb->SetMarker(false);
-  return res;
-}
+#include <set.hpp>
+#include <iostream>
 
 void ControlFlow::travel(BasicBlock* bb, std::vector<BasicBlock*>& vec) {
   ASSERT(bb);
@@ -116,20 +71,42 @@ void ControlFlow::SetIdom() {
 
 void ControlFlow::find_idom(BasicBlock* bb) {
   if (!bb) return;
-  Set cand = Reachable(entry_);
+  if (bb->GetIdom() != nullptr) return;
 
-  if (bb->nprecs() == 1) {
-    bb->SetIdom(bb->GetPrec(0));
+  // if (bb->nprecs() == 1) {
+  //   bb->SetIdom(bb->GetPrec(0));
+  // } else {
+  //   for (size_t i = 0; i < bb->nprecs(); i++) {
+  //     Set& dom = bb->GetPrec(i)->Dom();
+  //     cand = Intersect(cand, dom);
+  //   }
+  //   if (cand.empty()) { std::cout << bb->id() << "\n"; }
+  //   ASSERT(!cand.empty());
+  //   size_t n = 0;
+  //   BasicBlock* closest;
+  //   for (SetIt it = cand.begin(); it != cand.end(); it++) {
+  //     if ((*it)->Dom().size() > n) {
+  //       n = (*it)->Dom().size();
+  //       closest = *it;
+  //     }
+  //   }
+  //   bb->SetIdom(closest);
+  // }
+
+
+
+  if (bb->Dom().size() == 1) {
+    std::cout << "idom(" << bb->id() << ") = " << *(bb->Dom().begin());
+    bb->SetIdom(*(bb->Dom().begin()));
   } else {
-    for (size_t i = 0; i < bb->nprecs(); i++) {
-      Set& dom = bb->GetPrec(i)->Dom();
-      cand = Intersect(cand, bb->GetPrec(i)->Dom());
-    }
-    ASSERT(!cand.empty());
+    Set cand = bb->Dom();
     size_t n = 0;
-    BasicBlock* closest;
+    BasicBlock* closest = nullptr;
     for (SetIt it = cand.begin(); it != cand.end(); it++) {
-      if ((*it)->Dom().size() > n) {
+      if (*it == bb)
+        continue;
+      std::cout << "cand(" << bb->id() << ") = " << (*it)->id() << std::endl;
+      if ((*it)->Dom().size() >= n) {
         n = (*it)->Dom().size();
         closest = *it;
       }

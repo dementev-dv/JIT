@@ -5,7 +5,6 @@
 #include <bb.hpp>
 #include <assert.hpp>
 
-#include <fstream>
 #include <queue>
 
 class Function;
@@ -41,10 +40,13 @@ class ControlFlow final {
   void DumpGraph(const char* path);
   void DumpDomTree(const char* path);
   void DumpIdomTree(const char* path);
+  void DumpLoopTree(const char *path);
 
  private:
   void travel(BasicBlock* bb, std::vector<BasicBlock*>& vec);
   void find_idom(BasicBlock* bb);
+  void loop_travel(BasicBlock* bb);
+  void analyze_edge(BasicBlock* src, BasicBlock* dst);
 
   std::vector<BasicBlock*> DFS() {
     std::vector<BasicBlock*> vec;
@@ -86,6 +88,7 @@ class ControlFlow final {
   std::vector<Loop*> loop_;
   size_t bbid_{0};
   size_t insid_{0};
+  size_t loopid_{0};
   Function* func_;
 };
 
